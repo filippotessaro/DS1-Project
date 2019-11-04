@@ -13,9 +13,13 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import java.util.concurrent.ThreadLocalRandom;
 
+import java.lang.*;
+
+import static java.lang.Thread.sleep;
+
 public class Node extends AbstractActor  {
-	
-	//#Building-tree message	
+
+	//#Building-tree message
 	static public class Building_tree {
 		public ActorRef neighbor;
 		public int id;
@@ -34,15 +38,23 @@ public class Node extends AbstractActor  {
 		
 		public Initialize(int id) {
 			this.id = id;
+			this.holder = null;
 		}
 	}
 	//Initialization message
+
+	public static class Privilege implements Serializable{
+		private String token;
+
+		Privilege(String tk){
+			this.token = tk;
+		}
+	}
 	
 	//#Request message
 	static public class Request implements Serializable {
 		private int id;
 		
-		public Request() {};
 		public Request(int id) {
 			this.id = id;
 		};
@@ -63,69 +75,108 @@ public class Node extends AbstractActor  {
 	
 	public Node(int my_id) {
 		this.my_id = my_id;
-		using = false;
-		asked = false;
-		holder = null;
-		id_holder = 0;
+		this.using = false;
+		this.asked = false;
+		this.holder = null;
+		this.id_holder = 0;
 	}	
 	
 	//#Handle initialization message
-		private void init() {
-			
-			switch(this.id_holder) {
-			  case 0:
-				  holder = "self";
-				  break;
-			  case 1:
-				  holder = "A";
-				  break;
-			  case 2:
-				  holder = "B";
-				  break;
-			  case 3:
-				  holder = "C";
-				  break;
-			  case 4:
-				  holder = "D";
-				  break;
-			  case 5:
-				  holder = "E";
-				  break;
-			  default:
-			    // code block :)
-			}
-			
-			for(int vicino: neighbors.keySet()) {
-				if(vicino != id_holder) {
-					neighbors.get(vicino).tell(new Initialize(my_id), getSelf()); 
-				}
-			}
-			//System.out.println("And the holder is....\n"+ holder + " " + my_id );
-			
-			boolean decided = true;
-			int randomNum;
-			while(decided) {
-				randomNum = ThreadLocalRandom.current().nextInt(0, 4);
-				if(randomNum == 2) {
-					getSelf().tell(new Request(), getSelf());
-					decided = false;
-				}
+	private void init(Initialize a) {
+
+		switch(a.id) {
+		  case 0:
+			  holder = "self";
+			  break;
+		  case 1:
+			  holder = "A";
+			  break;
+		  case 2:
+			  holder = "B";
+			  break;
+		  case 3:
+			  holder = "C";
+			  break;
+		  case 4:
+			  holder = "D";
+			  break;
+		  case 5:
+			  holder = "E";
+			  break;
+		  default:
+			// code block :)
+		}
+
+		this.id_holder = a.id;
+
+		for(int vicino: neighbors.keySet()) {
+			if(vicino != id_holder) {
+				neighbors.get(vicino).tell(new Initialize(my_id), getSelf());
 			}
 		}
-		//#Handle initialization message	
-		
-		//#Handle Request message
-		private void make_request() {
-			if(holder != "self" && !request_q.isEmpty() && asked == false) {
-				neighbors.get(id_holder).tell(new Request(my_id), getSelf());
-				asked = true;
-			}
-			if(holder == "self") {
-				getSelf().tell(msg, sender);
+		System.out.println("And the holder is....\n"+ holder + " " + my_id );
+
+		boolean decided = true;
+		int randomNum;
+		while(decided) {
+			randomNum = ThreadLocalRandom.current().nextInt(0, 4);
+			if(randomNum == 2) {
+				getSelf().tell(new Request(my_id), getSelf());
+				decided = false;
 			}
 		}
-		//#Handle Request message
-	
+	}
+	//#Handle initialization message
+
+	//#Handle Request message
+	private void make_request(Request new_r) {
+		/*if (request_q.isEmpty()) {
+			request_q.add(new_r.id);
+		}*/
+
+		if(holder != "self" && !request_q.isEmpty() && asked == false) {
+			neighbors.get(id_holder).tell(new Request(my_id), getSelf());
+			asked = true;
+		}
+		if(holder == "self") {
+			//getSelf().tell(msg, sender);
+		}
+	}
+	//#Handle Request message
+
+	private void assign_privilege(Privilege pr){
+		if(holder == "self" && !this.using && !this.request_q.isEmpty()){
+			id_holder = request_q.remove();
+			this.asked = false;
+
+			if(holder == "self"){
+				using = true;
+				//TODO enter CS
+				enter_CS();
+			} else{
+				//TODO send privilege to holder
+				neighbors.get(id_holder).tell(new Privilege("aa"), getSelf());
+			}
+
+		}
+	}
+
+	private void enter_CS(){
+		try {
+			int randomNum = ThreadLocalRandom.current().nextInt(0, 20);
+			sleep(randomNum);
+			exit_CS();
+
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void exit_CS() {
+		using = false;
+
+	}
+
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
@@ -134,6 +185,7 @@ public class Node extends AbstractActor  {
 				.match(Building_tree.class, bt -> {
 					this.neighbors.put(bt.id, bt.neighbor);
 				})
+				.match(Privilege.class, this::assign_privilege)
 				.build();
 	}
 

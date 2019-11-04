@@ -29,17 +29,17 @@ public class RYMD {
 	        
 		      //#create tree-structure 
 		      Node_A.tell(new Building_tree(2,Node_B), ActorRef.noSender());
-		      Node_A.tell(new Building_tree(3,Node_C), ActorRef.noSender());
+		      //Node_A.tell(new Building_tree(3,Node_C), ActorRef.noSender());
 		    
-		      Node_C.tell(new Building_tree(1,Node_A), ActorRef.noSender());
-		      Node_C.tell(new Building_tree(5,Node_E), ActorRef.noSender());
-		      Node_C.tell(new Building_tree(4,Node_D), ActorRef.noSender());
+		      //Node_C.tell(new Building_tree(1,Node_A), ActorRef.noSender());
+		      //Node_C.tell(new Building_tree(5,Node_E), ActorRef.noSender());
+		      //Node_C.tell(new Building_tree(4,Node_D), ActorRef.noSender());
 		    
 		      Node_B.tell(new Building_tree(1,Node_A), ActorRef.noSender());
 		    
-		      Node_E.tell(new Building_tree(3,Node_C), ActorRef.noSender());
+		      //Node_E.tell(new Building_tree(3,Node_C), ActorRef.noSender());
 		      
-		      Node_D.tell(new Building_tree(3,Node_C), ActorRef.noSender());
+		      //Node_D.tell(new Building_tree(3,Node_C), ActorRef.noSender());
 		      //#create tree-structure
 		    
 		      //#inject token in arbitrary node and flood it
