@@ -61,9 +61,9 @@ public class Node extends AbstractActor  {
 
 		this.id_holder = a.getId();
 
-		for(int vicino: neighbors.keySet()) {
-			if(vicino != id_holder) {
-				neighbors.get(vicino).tell(new Initialize(my_id), getSelf());
+		for(int neighbor: neighbors.keySet()) {
+			if(neighbor != id_holder) {
+				neighbors.get(neighbor).tell(new Initialize(my_id), getSelf());
 			}
 		}
 		System.out.println("And the holder is....\n"+ holder + " " + my_id );
