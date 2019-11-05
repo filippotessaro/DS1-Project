@@ -44,7 +44,7 @@ public class RYMD {
 		      //#create tree-structure
 		    
 		      //#inject token in arbitrary node and flood it
-		      Node_A.tell(new Initialize(0), ActorRef.noSender());
+		      Node_A.tell(new Initialize(1), ActorRef.noSender());
 		      //#inject token in arbitrary node and flood it
 			 
 		      System.out.println(">>> Press ENTER to exit <<<");

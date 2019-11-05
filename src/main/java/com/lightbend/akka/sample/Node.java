@@ -10,6 +10,10 @@ import akka.actor.Props;
 import com.lightbend.akka.sample.Message.Message.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import static java.lang.Thread.sleep;
 
 public class Node extends AbstractActor  {
@@ -20,6 +24,10 @@ public class Node extends AbstractActor  {
 	private Map<Integer, ActorRef> neighbors = new HashMap<Integer, ActorRef>();
 	//private List<ActorRef> neighbors = new ArrayList<ActorRef>();
 	//private Map<ActorRef, Integer> neighbors = new HashMap<ActorRef, Integer>();
+
+	public class LockClass{
+
+	};
 	
 	static public Props props(int id) {
 		return Props.create(Node.class, () -> new Node(id));
@@ -68,22 +76,13 @@ public class Node extends AbstractActor  {
 		}
 		System.out.println("And the holder is....\n"+ holder + " " + my_id );
 
-		boolean decided = true;
-		int randomNum;
-		while(decided) {
-			randomNum = ThreadLocalRandom.current().nextInt(0, 4);
-			if(randomNum == 2) {
-				//request_q.add(my_id);
+		//TODO check initialization
+		//getSelf().tell(new Privilege(), getSelf());
+		//getSelf().tell(new Request(my_id), getSelf());
 
-				//TODO check initialization
-				//getSelf().tell(new Privilege(), getSelf());
-				//getSelf().tell(new Request(my_id), getSelf());
+		//Node wishes to enter in CS
+		getSelf().tell(new Enter_CS(), getSelf());
 
-				//Node wishes to enter in CS
-				getSelf().tell(new Enter_CS(), getSelf());
-				decided = false;
-			}
-		}
 	}
 	//#Handle initialization message
 
@@ -135,33 +134,38 @@ public class Node extends AbstractActor  {
 	}
 
 
-	/*----- EVENTS MANAGEMENT SECTION ------*/
-	private void Do_CS(){
-		System.out.println("Node: " + my_id + " is doing something in CS");
-		try {
-			int randomNum = ThreadLocalRandom.current().nextInt(0, 20);
-			sleep(randomNum);
 
-			// TODO implement callback to exitCS
-			getSelf().tell(new Exit_CS(), ActorRef.noSender());
+
+	/*----- EVENTS MANAGEMENT SECTION ------*/
+	public void Do_CS(){
+		System.out.println("Node: " + my_id + " is doing something in CS");
+
+		try {
+			int randomNum = ThreadLocalRandom.current().nextInt(0, 100);
+			Thread.sleep(randomNum);
 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		}finally {
+			// TODO implement callback to exitCS
+			getSelf().tell(new Exit_CS(), ActorRef.noSender());
 		}
+
 	}
 
 	private void wish_EnterCS(Enter_CS msg){
-		/*request_q.add(my_id);
-		assign_privilege();
-		make_request();*/
-
 		request_q.add(my_id);
+		assign_privilege();
+		make_request();
+
+		/*request_q.add(my_id);
 		getSelf().tell(new Privilege(), getSelf());
-		getSelf().tell(new Request(my_id), getSelf());
+		getSelf().tell(new Request(my_id), getSelf());*/
 
 	}
 
 	private void exit_CS(Exit_CS msg) {
+		System.out.println("Node: " + my_id + " is exiting from the CS!");
 		using = false;
 		//getSelf().tell(new Privilege(), getSelf());
 		//assign_privilege(new Privilege(""))
