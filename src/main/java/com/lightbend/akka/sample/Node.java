@@ -73,11 +73,14 @@ public class Node extends AbstractActor  {
 		while(decided) {
 			randomNum = ThreadLocalRandom.current().nextInt(0, 4);
 			if(randomNum == 2) {
-				request_q.add(my_id);
+				//request_q.add(my_id);
 
 				//TODO check initialization
-				getSelf().tell(new Privilege(), getSelf());
-				getSelf().tell(new Request(my_id), getSelf());
+				//getSelf().tell(new Privilege(), getSelf());
+				//getSelf().tell(new Request(my_id), getSelf());
+
+				//Node wishes to enter in CS
+				getSelf().tell(new Enter_CS(), getSelf());
 				decided = false;
 			}
 		}
@@ -108,8 +111,8 @@ public class Node extends AbstractActor  {
 
 			if(id_holder == my_id){
 				using = true;
-				//TODO enter CS
-				//enter_CS();
+				//TODO enter in CS
+				Do_CS();
 
 			} else {
 				//TODO send privilege MESSAGE to holder
@@ -147,10 +150,15 @@ public class Node extends AbstractActor  {
 		}
 	}
 
-	private void enter_CS(Enter_CS msg){
-		request_q.add(my_id);
+	private void wish_EnterCS(Enter_CS msg){
+		/*request_q.add(my_id);
 		assign_privilege();
-		make_request();
+		make_request();*/
+
+		request_q.add(my_id);
+		getSelf().tell(new Privilege(), getSelf());
+		getSelf().tell(new Request(my_id), getSelf());
+
 	}
 
 	private void exit_CS(Exit_CS msg) {
@@ -181,7 +189,7 @@ public class Node extends AbstractActor  {
 				.match(Initialize.class, this::init)
 				.match(Request.class, this::on_RequestRcv)
 				.match(Exit_CS.class, this::exit_CS)
-				.match(Enter_CS.class, this::enter_CS)
+				.match(Enter_CS.class, this::wish_EnterCS)
 				.match(Building_tree.class, bt -> {
 					this.neighbors.put(bt.id, bt.neighbor);
 				})
