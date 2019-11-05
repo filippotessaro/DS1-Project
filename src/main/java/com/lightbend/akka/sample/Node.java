@@ -1,66 +1,18 @@
 package com.lightbend.akka.sample;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import com.lightbend.akka.sample.Message.Message.*;
 import java.util.concurrent.ThreadLocalRandom;
-
 import java.lang.*;
-
 import static java.lang.Thread.sleep;
 
 public class Node extends AbstractActor  {
-
-	//#Building-tree message
-	static public class Building_tree {
-		public ActorRef neighbor;
-		public int id;
-		
-		public Building_tree(int id, ActorRef neighbor) {
-			this.neighbor = neighbor;
-			this.id = id;
-		}
-	}
-	//#Building-tree message
-	
-	//Initialization message
-	public static class Initialize implements Serializable {
-		private String holder;
-		private int id;
-		
-		public Initialize(int id) {
-			this.id = id;
-			this.holder = null;
-		}
-	}
-	//Initialization message
-
-	public static class Privilege implements Serializable{
-		private String token;
-
-		Privilege(String tk){
-			this.token = tk;
-		}
-	}
-	
-	//#Request message
-	static public class Request implements Serializable {
-		private int id;
-		
-		public Request(int id) {
-			this.id = id;
-		};
-	}
-	//#Request messages
-
 	private String holder;
 	private int my_id, id_holder;
 	private boolean using, asked;
@@ -84,7 +36,7 @@ public class Node extends AbstractActor  {
 	//#Handle initialization message
 	private void init(Initialize a) {
 
-		switch(a.id) {
+		switch(a.getId()) {
 		  case 0:
 			  holder = "self";
 			  break;
@@ -107,7 +59,7 @@ public class Node extends AbstractActor  {
 			// code block :)
 		}
 
-		this.id_holder = a.id;
+		this.id_holder = a.getId();
 
 		for(int vicino: neighbors.keySet()) {
 			if(vicino != id_holder) {
@@ -122,7 +74,9 @@ public class Node extends AbstractActor  {
 			randomNum = ThreadLocalRandom.current().nextInt(0, 4);
 			if(randomNum == 2) {
 				request_q.add(my_id);
-				getSelf().tell(new Privilege(""), getSelf());
+
+				//TODO check initialization
+				getSelf().tell(new Privilege(), getSelf());
 				getSelf().tell(new Request(my_id), getSelf());
 				decided = false;
 			}
@@ -130,20 +84,22 @@ public class Node extends AbstractActor  {
 	}
 	//#Handle initialization message
 
-	//#Handle Request message
-	private void make_request(Request new_r) {
+	/*
+	* USEFUL METHOD PART:
+	* ASSIGN PRIVILEGE
+	* MAKE REQUEST
+	*/
 
+	//#Handle Request message
+	private void make_request() {
 		if(id_holder != my_id && !request_q.isEmpty() && asked == false) {
 			neighbors.get(id_holder).tell(new Request(my_id), getSelf());
 			asked = true;
 		}
-		if(id_holder == my_id) {
-			getSelf().tell(new Privilege(""), getSelf());
-		}
 	}
 	//#Handle Request message
 
-	private void assign_privilege(Privilege pr){
+	private void assign_privilege(){
 		if(id_holder == my_id && !using && !request_q.isEmpty()){
 
 			// rewrite id_holder
@@ -153,59 +109,85 @@ public class Node extends AbstractActor  {
 			if(id_holder == my_id){
 				using = true;
 				//TODO enter CS
-				enter_CS();
+				//enter_CS();
 
 			} else {
-				//TODO send privilege to holder
-				// assign privilege may pass the privilege to another node
-				// or initiate a local entry to the CS. If the privilege is passed
-				// to another node, make req may request that the privilege be returned
+				//TODO send privilege MESSAGE to holder
+				neighbors.get(id_holder).tell(new Privilege(), getSelf());
 
-				neighbors.get(id_holder).tell(new Privilege(""), getSelf());
-
-				boolean decided = true;
+				/*boolean decided = true;
 				// random is useful in order to maintain a network stability
 				int randomNum;
 				while(decided) {
 					// may request that the privilege be returned
 					randomNum = ThreadLocalRandom.current().nextInt(0, 4);
 					if(randomNum == 2) {
-						getSelf().tell(new Request(my_id), getSelf());
+						getSelf().tell(new Request(), getSelf());
 						decided = false;
 					}
-				}
+				}*/
 			}
 
 		}
 	}
 
-	private void enter_CS(){
+
+	/*----- EVENTS MANAGEMENT SECTION ------*/
+	private void Do_CS(){
+		System.out.println("Node: " + my_id + " is doing something in CS");
 		try {
 			int randomNum = ThreadLocalRandom.current().nextInt(0, 20);
 			sleep(randomNum);
-			exit_CS();
+
+			// TODO implement callback to exitCS
+			getSelf().tell(new Exit_CS(), ActorRef.noSender());
 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void exit_CS() {
+	private void enter_CS(Enter_CS msg){
+		request_q.add(my_id);
+		assign_privilege();
+		make_request();
+	}
+
+	private void exit_CS(Exit_CS msg) {
 		using = false;
-		getSelf().tell(new Privilege(""), getSelf());
+		//getSelf().tell(new Privilege(), getSelf());
 		//assign_privilege(new Privilege(""))
+		assign_privilege();
+		make_request();
+	}
+
+	private void on_RequestRcv(Request req){
+		int reqId = req.getFromId();
+		request_q.add(reqId);
+		assign_privilege();
+		make_request();
+	}
+
+	private void on_PrivilegeRcv(Privilege prv){
+		id_holder = my_id;
+		//holder = "self";
+		assign_privilege();
+		make_request();
 	}
 
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
 				.match(Initialize.class, this::init)
-				.match(Request.class, this::make_request)
+				.match(Request.class, this::on_RequestRcv)
+				.match(Exit_CS.class, this::exit_CS)
+				.match(Enter_CS.class, this::enter_CS)
 				.match(Building_tree.class, bt -> {
 					this.neighbors.put(bt.id, bt.neighbor);
 				})
-				.match(Privilege.class, this::assign_privilege)
+				.match(Privilege.class, this::on_PrivilegeRcv)
 				.build();
 	}
+
 
 }

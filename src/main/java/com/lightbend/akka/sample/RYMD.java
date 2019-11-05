@@ -3,7 +3,8 @@ package com.lightbend.akka.sample;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import com.lightbend.akka.sample.Node.Building_tree;
+import com.lightbend.akka.sample.Message.Message.Building_tree;
+import com.lightbend.akka.sample.Message.Message.Initialize;
 
 import java.util.List;
 
@@ -43,7 +44,7 @@ public class RYMD {
 		      //#create tree-structure
 		    
 		      //#inject token in arbitrary node and flood it
-		      Node_A.tell(new Node.Initialize(0), ActorRef.noSender());
+		      Node_A.tell(new Initialize(0), ActorRef.noSender());
 		      //#inject token in arbitrary node and flood it
 			 
 		      System.out.println(">>> Press ENTER to exit <<<");
