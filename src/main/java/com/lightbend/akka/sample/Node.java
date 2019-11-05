@@ -79,7 +79,7 @@ public class Node extends AbstractActor  {
 		this.asked = false;
 		this.holder = null;
 		this.id_holder = 0;
-	}	
+	}
 	
 	//#Handle initialization message
 	private void init(Initialize a) {
@@ -121,6 +121,8 @@ public class Node extends AbstractActor  {
 		while(decided) {
 			randomNum = ThreadLocalRandom.current().nextInt(0, 4);
 			if(randomNum == 2) {
+				request_q.add(my_id);
+				getSelf().tell(new Privilege(""), getSelf());
 				getSelf().tell(new Request(my_id), getSelf());
 				decided = false;
 			}
@@ -130,32 +132,48 @@ public class Node extends AbstractActor  {
 
 	//#Handle Request message
 	private void make_request(Request new_r) {
-		/*if (request_q.isEmpty()) {
-			request_q.add(new_r.id);
-		}*/
 
-		if(holder != "self" && !request_q.isEmpty() && asked == false) {
+		if(id_holder != my_id && !request_q.isEmpty() && asked == false) {
 			neighbors.get(id_holder).tell(new Request(my_id), getSelf());
 			asked = true;
 		}
-		if(holder == "self") {
-			//getSelf().tell(msg, sender);
+		if(id_holder == my_id) {
+			getSelf().tell(new Privilege(""), getSelf());
 		}
 	}
 	//#Handle Request message
 
 	private void assign_privilege(Privilege pr){
-		if(holder == "self" && !this.using && !this.request_q.isEmpty()){
-			id_holder = request_q.remove();
-			this.asked = false;
+		if(id_holder == my_id && !using && !request_q.isEmpty()){
 
-			if(holder == "self"){
+			// rewrite id_holder
+			id_holder = request_q.remove();
+			asked = false;
+
+			if(id_holder == my_id){
 				using = true;
 				//TODO enter CS
 				enter_CS();
-			} else{
+
+			} else {
 				//TODO send privilege to holder
-				neighbors.get(id_holder).tell(new Privilege("aa"), getSelf());
+				// assign privilege may pass the privilege to another node
+				// or initiate a local entry to the CS. If the privilege is passed
+				// to another node, make req may request that the privilege be returned
+
+				neighbors.get(id_holder).tell(new Privilege(""), getSelf());
+
+				boolean decided = true;
+				// random is useful in order to maintain a network stability
+				int randomNum;
+				while(decided) {
+					// may request that the privilege be returned
+					randomNum = ThreadLocalRandom.current().nextInt(0, 4);
+					if(randomNum == 2) {
+						getSelf().tell(new Request(my_id), getSelf());
+						decided = false;
+					}
+				}
 			}
 
 		}
@@ -174,7 +192,8 @@ public class Node extends AbstractActor  {
 
 	private void exit_CS() {
 		using = false;
-
+		getSelf().tell(new Privilege(""), getSelf());
+		//assign_privilege(new Privilege(""))
 	}
 
 	@Override
