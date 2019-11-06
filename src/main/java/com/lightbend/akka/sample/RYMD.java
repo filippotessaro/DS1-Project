@@ -1,12 +1,9 @@
 package com.lightbend.akka.sample;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import com.lightbend.akka.sample.Message.Message.Building_tree;
-import com.lightbend.akka.sample.Message.Message.Initialize;
 
-import java.util.List;
+import com.lightbend.akka.sample.Messages.Message.Building_tree;
+import com.lightbend.akka.sample.Messages.Message.Initialize;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;

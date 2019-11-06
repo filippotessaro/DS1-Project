@@ -7,12 +7,9 @@ import java.util.Queue;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import com.lightbend.akka.sample.Message.Message.*;
+import com.lightbend.akka.sample.Messages.Message.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.lang.Thread.sleep;
 
@@ -24,6 +21,7 @@ public class Node extends AbstractActor  {
 	private Map<Integer, ActorRef> neighbors = new HashMap<Integer, ActorRef>();
 	//private List<ActorRef> neighbors = new ArrayList<ActorRef>();
 	//private Map<ActorRef, Integer> neighbors = new HashMap<ActorRef, Integer>();
+	private boolean recovery;
 
 	public class LockClass{
 
@@ -39,6 +37,7 @@ public class Node extends AbstractActor  {
 		this.asked = false;
 		this.holder = null;
 		this.id_holder = 0;
+		this.recovery = false;
 	}
 	
 	//#Handle initialization message
@@ -94,42 +93,34 @@ public class Node extends AbstractActor  {
 
 	//#Handle Request message
 	private void make_request() {
-		if(id_holder != my_id && !request_q.isEmpty() && asked == false) {
-			neighbors.get(id_holder).tell(new Request(my_id), getSelf());
-			asked = true;
+		if(!this.recovery){
+			if(id_holder != my_id && !request_q.isEmpty() && asked == false) {
+				neighbors.get(id_holder).tell(new Request(my_id), getSelf());
+				asked = true;
+			}
 		}
 	}
 	//#Handle Request message
 
 	private void assign_privilege(){
-		if(id_holder == my_id && !using && !request_q.isEmpty()){
+		if(!this.recovery){
+			if(id_holder == my_id && !using && !request_q.isEmpty()){
 
-			// rewrite id_holder
-			id_holder = request_q.remove();
-			asked = false;
+				// rewrite id_holder
+				id_holder = request_q.remove();
+				asked = false;
 
-			if(id_holder == my_id){
-				using = true;
-				//TODO enter in CS
-				Do_CS();
+				if(id_holder == my_id){
+					using = true;
+					//TODO enter in CS
+					Do_CS();
 
-			} else {
-				//TODO send privilege MESSAGE to holder
-				neighbors.get(id_holder).tell(new Privilege(), getSelf());
+				} else {
+					//TODO send privilege MESSAGE to holder
+					neighbors.get(id_holder).tell(new Privilege(), getSelf());
+				}
 
-				/*boolean decided = true;
-				// random is useful in order to maintain a network stability
-				int randomNum;
-				while(decided) {
-					// may request that the privilege be returned
-					randomNum = ThreadLocalRandom.current().nextInt(0, 4);
-					if(randomNum == 2) {
-						getSelf().tell(new Request(), getSelf());
-						decided = false;
-					}
-				}*/
 			}
-
 		}
 	}
 
@@ -187,6 +178,18 @@ public class Node extends AbstractActor  {
 		make_request();
 	}
 
+	/*
+	* RECOVERY EVENTS
+	* */
+
+	private void on_RestartRcv(Restart res){
+
+	}
+
+	private void on_AdviseRcv(Advise adv){
+
+	}
+
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
@@ -194,6 +197,8 @@ public class Node extends AbstractActor  {
 				.match(Request.class, this::on_RequestRcv)
 				.match(Exit_CS.class, this::exit_CS)
 				.match(Enter_CS.class, this::wish_EnterCS)
+				.match(Restart.class, this::on_RestartRcv)
+				.match(Advise.class, this::on_AdviseRcv)
 				.match(Building_tree.class, bt -> {
 					this.neighbors.put(bt.id, bt.neighbor);
 				})

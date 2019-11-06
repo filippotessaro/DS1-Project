@@ -1,4 +1,4 @@
-package com.lightbend.akka.sample.Message;
+package com.lightbend.akka.sample.Messages;
 
 import akka.actor.ActorRef;
 
@@ -64,4 +64,13 @@ public class Message {
     static public class Exit_CS implements Serializable{ }
 
 
+    /*
+    * FAILURE MESSAGES
+    * */
+
+    //Restart Message in the moment that there is a node failure
+    static public class Restart implements Serializable{ }
+
+    //Advise message in reply to the Restart
+    static public class Advise implements Serializable{ }
 }
