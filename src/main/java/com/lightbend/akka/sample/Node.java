@@ -11,6 +11,7 @@ import com.lightbend.akka.sample.Messages.Message.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.*;
 
+import static java.lang.Thread.activeCount;
 import static java.lang.Thread.sleep;
 
 public class Node extends AbstractActor  {
@@ -183,11 +184,67 @@ public class Node extends AbstractActor  {
 	* */
 
 	private void on_RestartRcv(Restart res){
+		int id_RestartNode = res.getFromId();
+
+		int hold = 0;
+		boolean inQueueX = false, asked = false;
+
+		if(this.id_holder == id_RestartNode && !this.asked){
+			//x may be privileged node, Y is not an element of requestq
+			hold = id_RestartNode;
+			inQueueX = false;
+		}else if(this.id_holder == id_RestartNode && this.asked){
+			//x may be privileged, y is an element of requestq
+			hold = id_RestartNode;
+			inQueueX = true;
+		}else if(this.id_holder != id_RestartNode && !this.request_q.contains(id_RestartNode)){
+			//x not be privileged, asked must be false
+			hold = this.my_id;
+			asked = false;
+		}else if(this.id_holder != id_RestartNode && this.request_q.contains(id_RestartNode)){
+			//x not be the privileged node, it has req the privilege and asked=true
+			hold = this.my_id;
+			asked = true;
+		}
+
+		neighbors.get(id_RestartNode).tell(new Advise(my_id, hold, asked, inQueueX), getSelf());
 
 	}
 
 	private void on_AdviseRcv(Advise adv){
 
+		//TODO Store advises in data structure
+
+		//TODO End the recovery mode
+
+	}
+
+	private void on_NodeFailure(NodeFailure failure){
+		//TODO set all node parameters to default ex: requestq. neighbours ...
+		//Reset all parameters
+		this.asked = false;
+		this.request_q = null;
+		this.holder = null;
+
+		//Start Recovery procedure...
+		StartRecovery();
+	}
+
+	private void StartRecovery(){
+		//Delay for a sufficient long time
+		try {
+			Thread.sleep(300);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		//Send Restart Message to each neighbours
+		for(int neighbor: neighbors.keySet()) {
+			if(neighbor != id_holder) {
+				neighbors.get(neighbor).tell(new Restart(my_id), getSelf());
+			}
+		}
+		//Now await the advise messages on the event calling
 	}
 
 	@Override
@@ -199,6 +256,7 @@ public class Node extends AbstractActor  {
 				.match(Enter_CS.class, this::wish_EnterCS)
 				.match(Restart.class, this::on_RestartRcv)
 				.match(Advise.class, this::on_AdviseRcv)
+				.match(NodeFailure.class, this::on_NodeFailure)
 				.match(Building_tree.class, bt -> {
 					this.neighbors.put(bt.id, bt.neighbor);
 				})

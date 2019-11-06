@@ -68,9 +68,33 @@ public class Message {
     * FAILURE MESSAGES
     * */
 
+    //Node Failure message to enter in Recovery Mode
+    static public class NodeFailure implements Serializable{ }
+
     //Restart Message in the moment that there is a node failure
-    static public class Restart implements Serializable{ }
+    static public class Restart implements Serializable{
+        int fromId;
+
+        public Restart(int i){
+            this.fromId = i;
+        }
+
+        public int getFromId() {
+            return fromId;
+        }
+    }
 
     //Advise message in reply to the Restart
-    static public class Advise implements Serializable{ }
+    static public class Advise implements Serializable{
+        public int holder, fromId;
+        public boolean inQueueX, asked;
+
+        public Advise(int from, int hold,boolean a,boolean inqueue){
+            this.fromId = from;
+            this.holder = hold;
+            this.asked = a;
+            this.inQueueX = inqueue;
+        }
+
+    }
 }
