@@ -15,14 +15,20 @@ import static java.lang.Thread.sleep;
 
 public class Node extends AbstractActor  {
 	private String holder;
-	private int my_id, id_holder;
+	private int my_id;
+
+	public int getId_holder() {
+		return id_holder;
+	}
+
+	private int id_holder;
 	private boolean using, asked;
 	private Queue<Integer> request_q = new LinkedList<Integer>();
 	private Map<Integer, ActorRef> neighbors = new HashMap<Integer, ActorRef>();
 
 	// params for recovery
 	private boolean recovery;
-	public List<Advise> advises;
+	public LinkedList<Advise> advises;
 
 	public class LockClass{
 
@@ -227,7 +233,7 @@ public class Node extends AbstractActor  {
 			asked = true;
 		}
 
-		neighbors.get(id_RestartNode).tell(new Advise(my_id, hold, asked, inQueueX), getSelf());
+		neighbors.get(id_RestartNode).tell(new Advise(my_id, hold, asked, inQueueX, (LinkedList)request_q), getSelf());
 
 	}
 
@@ -242,7 +248,7 @@ public class Node extends AbstractActor  {
 		}
 
 		if(advises.size() == neighbors.size()){
-			System.out.println("Advises Rece");
+			System.out.println("Advises Received from " + adv.fromId);
 			RestoreNode();
 		}
 
@@ -252,6 +258,61 @@ public class Node extends AbstractActor  {
 		//TODO End the recovery mode
 		//Node restoring part
 
+		// enter only on this condition
+		assert (advises.size() == neighbors.size() && this.recovery);
+
+		boolean x_isHolder = false;
+
+
+		//Determine holder & reconstruct queue in one cycle
+		for(Advise advise: advises) {
+			if(advise.holder == this.my_id){
+				x_isHolder = true;
+			} else{
+				//case dissenting node
+				x_isHolder = false;
+				this.id_holder = advise.holder;
+			}
+
+			//Reconstruct queue
+			if(advise.holder == my_id && advise.inQueueX){
+				this.request_q.add(advise.fromId);
+			}
+
+		}
+		if(x_isHolder){
+			System.out.println("Node " + my_id + "is not privileged");
+		}else{
+			System.out.println("Node " + my_id + "is not privileged");
+		}
+
+		//Determining AskedX
+		if(id_holder == my_id){
+			this.asked = false;
+		}else{
+			if(id_holder != my_id){
+				for(Advise advise: advises) {
+					if(advise.fromId == id_holder &&
+							advise.z_reqQueue.contains(my_id)) {
+						this.asked = true;
+					} /*else{
+						this.asked = false;
+					}*/
+
+				}
+			}
+		}
+
+		//Reconstruct the Request_Qx
+
+		//Reassigning usingX
+		this.using = false;
+
+		// End up recovery mode
+		System.out.println("Node " + this.my_id + " terminates the recovery mode. ");
+		this.recovery = false;
+		this.assign_privilege();
+		this.make_request();
 	}
 
 	private void on_NodeFailure(NodeFailure failure){

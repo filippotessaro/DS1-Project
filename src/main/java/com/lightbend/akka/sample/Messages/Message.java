@@ -3,6 +3,8 @@ package com.lightbend.akka.sample.Messages;
 import akka.actor.ActorRef;
 
 import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Message {
 
@@ -88,12 +90,14 @@ public class Message {
     static public class Advise implements Serializable{
         public int holder, fromId;
         public boolean inQueueX, asked;
+        public LinkedList<Integer> z_reqQueue;
 
-        public Advise(int from, int hold,boolean a,boolean inqueue){
+        public Advise(int from, int hold, boolean a, boolean in_queue, LinkedList<Integer> list){
             this.fromId = from;
             this.holder = hold;
             this.asked = a;
-            this.inQueueX = inqueue;
+            this.inQueueX = in_queue;
+            this.z_reqQueue = list;
         }
 
     }
