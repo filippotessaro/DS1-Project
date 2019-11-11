@@ -2,11 +2,17 @@ package com.lightbend.akka.sample;
 
 import java.io.IOException;
 
+import com.lightbend.akka.sample.Messages.Message;
 import com.lightbend.akka.sample.Messages.Message.Building_tree;
 import com.lightbend.akka.sample.Messages.Message.Initialize;
+import com.lightbend.akka.sample.Messages.Message.NodeFailure;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+
+import java.util.Scanner;
+import java.util.concurrent.ThreadLocalRandom;
+
 
 public class RYMD {
 	 public static void main(String[] args) {
@@ -45,10 +51,26 @@ public class RYMD {
 		      //#inject token in arbitrary node and flood it
 			 
 		      System.out.println(">>> Press ENTER to exit <<<");
-		      System.in.read();
-		    } catch (IOException ioe) {
+		      //char command = (char) System.in.read();
+
+				Scanner s= new Scanner(System.in);
+				char command = s.next().charAt(0);
+
+		      switch (command){
+				  case 'f':
+					  ThreadLocalRandom current = ThreadLocalRandom.current();
+					  int rand = current.nextInt(5) +1;
+					  Node_B.tell(new NodeFailure(), ActorRef.noSender());
+				  	break;
+				  case 's':
+				  	//fsystem.terminate();
+				  	break;
+			  }
+		    } catch (Exception e) {
 		    } finally {
-		      system.terminate();
+		      //system.terminate();
+				system.terminate();
+				System.out.println("Stopped");
 	    }
 	}
 }

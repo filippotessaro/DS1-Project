@@ -255,11 +255,12 @@ public class Node extends AbstractActor  {
 	}
 
 	private void RestoreNode() {
-		//TODO End the recovery mode
 		//Node restoring part
 
 		// enter only on this condition
 		assert (advises.size() == neighbors.size() && this.recovery);
+
+		System.out.println("Restoring Failed Node: " + my_id);
 
 		boolean x_isHolder = false;
 
@@ -281,7 +282,8 @@ public class Node extends AbstractActor  {
 
 		}
 		if(x_isHolder){
-			System.out.println("Node " + my_id + "is not privileged");
+			System.out.println("Node " + my_id + "is privileged");
+			this.id_holder = my_id;
 		}else{
 			System.out.println("Node " + my_id + "is not privileged");
 		}
@@ -290,15 +292,10 @@ public class Node extends AbstractActor  {
 		if(id_holder == my_id){
 			this.asked = false;
 		}else{
-			if(id_holder != my_id){
-				for(Advise advise: advises) {
-					if(advise.fromId == id_holder &&
-							advise.z_reqQueue.contains(my_id)) {
-						this.asked = true;
-					} /*else{
-						this.asked = false;
-					}*/
-
+			for(Advise advise: advises) {
+				if(advise.fromId == id_holder &&
+						advise.z_reqQueue.contains(my_id)) {
+					this.asked = true;
 				}
 			}
 		}
@@ -316,11 +313,12 @@ public class Node extends AbstractActor  {
 	}
 
 	private void on_NodeFailure(NodeFailure failure){
-		//TODO set all node parameters to default ex: requestq. neighbours ...
 		//Reset all parameters
 		this.asked = false;
 		this.request_q = null;
 		this.holder = null;
+
+		System.out.println("Node " + my_id + " is failing... :(");
 
 		//Start Recovery procedure...
 		StartRecovery();
@@ -328,11 +326,13 @@ public class Node extends AbstractActor  {
 
 	private void StartRecovery(){
 		//Delay for a sufficient long time
+		System.out.println("Sleep ...");
 		try {
-			Thread.sleep(300);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println("End Sleep ... \nStart sending Restart Messages to neighbours");
 
 		//Send Restart Message to each neighbours
 		for(int neighbor: neighbors.keySet()) {
