@@ -131,8 +131,6 @@ public class Node extends AbstractActor  {
 	}
 
 
-
-
 	/*----- EVENTS MANAGEMENT SECTION ------*/
 	public void Do_CS(){
 		System.out.println("Node: " + my_id + " is doing something in CS");
@@ -336,9 +334,7 @@ public class Node extends AbstractActor  {
 
 		//Send Restart Message to each neighbours
 		for(int neighbor: neighbors.keySet()) {
-			if(neighbor != id_holder) {
-				neighbors.get(neighbor).tell(new Restart(my_id), getSelf());
-			}
+			neighbors.get(neighbor).tell(new Restart(my_id), getSelf());
 		}
 		//Now await the advise messages on the event calling
 	}

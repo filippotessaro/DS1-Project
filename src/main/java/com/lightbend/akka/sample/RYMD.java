@@ -49,27 +49,21 @@ public class RYMD {
 		      //#inject token in arbitrary node and flood it
 		      Node_A.tell(new Initialize(1), ActorRef.noSender());
 		      //#inject token in arbitrary node and flood it
-			 
-		      System.out.println(">>> Press ENTER to exit <<<");
-		      //char command = (char) System.in.read();
 
-				Scanner s= new Scanner(System.in);
-				char command = s.next().charAt(0);
+			  System.out.println(">>> Press f to fail a node <<<");
 
-		      switch (command){
-				  case 'f':
-					  ThreadLocalRandom current = ThreadLocalRandom.current();
-					  int rand = current.nextInt(5) +1;
-					  Node_B.tell(new NodeFailure(), ActorRef.noSender());
-				  	break;
-				  case 's':
-				  	//fsystem.terminate();
-				  	break;
-			  }
+			  Scanner s = new Scanner(System.in);
+			  char command = s.next().charAt(0);
+
+			  if (command == 'f') {
+			  		ThreadLocalRandom current = ThreadLocalRandom.current();
+					int rand = current.nextInt(5) + 1;
+					Node_C.tell(new NodeFailure(), ActorRef.noSender());
+				}
+
 		    } catch (Exception e) {
 		    } finally {
-		      //system.terminate();
-				system.terminate();
+				//system.terminate();
 				System.out.println("Stopped");
 	    }
 	}
