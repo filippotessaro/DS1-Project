@@ -28,11 +28,8 @@ public class Node extends AbstractActor  {
 
 	// params for recovery
 	private boolean recovery;
-	public LinkedList<Advise> advises;
+	public List<Advise> advises;
 
-	public class LockClass{
-
-	};
 	
 	static public Props props(int id) {
 		return Props.create(Node.class, () -> new Node(id));
@@ -46,7 +43,7 @@ public class Node extends AbstractActor  {
 		this.id_holder = 0;
 		this.recovery = false;
 
-		this.advises = null;
+		this.advises = new ArrayList();
 	}
 	
 	//#Handle initialization message
@@ -245,7 +242,7 @@ public class Node extends AbstractActor  {
 			System.out.println("There is a problem on Advise reception");
 		}
 
-		if(advises.size() == neighbors.size()){
+		if(advises.size() == neighbors.keySet().size()){
 			System.out.println("Advises Received from " + adv.fromId);
 			RestoreNode();
 		}
@@ -256,7 +253,7 @@ public class Node extends AbstractActor  {
 		//Node restoring part
 
 		// enter only on this condition
-		assert (advises.size() == neighbors.size() && this.recovery);
+		assert (advises.size() == neighbors.keySet().size() && this.recovery);
 
 		System.out.println("Restoring Failed Node: " + my_id);
 
@@ -303,6 +300,8 @@ public class Node extends AbstractActor  {
 		//Reassigning usingX
 		this.using = false;
 
+		advises.clear();
+
 		// End up recovery mode
 		System.out.println("Node " + this.my_id + " terminates the recovery mode. ");
 		this.recovery = false;
@@ -313,7 +312,7 @@ public class Node extends AbstractActor  {
 	private void on_NodeFailure(NodeFailure failure){
 		//Reset all parameters
 		this.asked = false;
-		this.request_q = null;
+		this.request_q.clear();
 		this.holder = null;
 
 		System.out.println("Node " + my_id + " is failing... :(");
