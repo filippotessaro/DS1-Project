@@ -9,6 +9,9 @@ import akka.actor.Props;
 import com.lightbend.akka.sample.Messages.Message.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.*;
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+
 
 import static java.lang.Thread.activeCount;
 import static java.lang.Thread.sleep;
@@ -32,6 +35,7 @@ public class Node extends AbstractActor  {
 
 	
 	static public Props props(int id) {
+
 		return Props.create(Node.class, () -> new Node(id));
 	}
 	
@@ -49,29 +53,7 @@ public class Node extends AbstractActor  {
 	//#Handle initialization message
 	private void init(Initialize a) {
 
-		switch(a.getId()) {
-		  case 0:
-			  holder = "self";
-			  break;
-		  case 1:
-			  holder = "A";
-			  break;
-		  case 2:
-			  holder = "B";
-			  break;
-		  case 3:
-			  holder = "C";
-			  break;
-		  case 4:
-			  holder = "D";
-			  break;
-		  case 5:
-			  holder = "E";
-			  break;
-		  default:
-			// code block :)
-		}
-
+		this.holder = String.valueOf(a.getId());
 		this.id_holder = a.getId();
 
 		for(int neighbor: neighbors.keySet()) {
@@ -79,12 +61,6 @@ public class Node extends AbstractActor  {
 				neighbors.get(neighbor).tell(new Initialize(my_id), getSelf());
 			}
 		}
-
-		System.out.println("And the holder is....\n"+ holder + " " + my_id );
-
-		//TODO check initialization
-		//getSelf().tell(new Privilege(), getSelf());
-		//getSelf().tell(new Request(my_id), getSelf());
 
 		//Node wishes to enter in CS
 		getSelf().tell(new Enter_CS(), getSelf());
@@ -277,10 +253,10 @@ public class Node extends AbstractActor  {
 
 		}
 		if(x_isHolder){
-			System.out.println("Node " + my_id + "is privileged");
+			System.out.println("Node " + my_id + " is privileged");
 			this.id_holder = my_id;
 		}else{
-			System.out.println("Node " + my_id + "is not privileged");
+			System.out.println("Node " + my_id + " is not privileged");
 		}
 
 		//Determining AskedX
@@ -338,6 +314,8 @@ public class Node extends AbstractActor  {
 		//Now await the advise messages on the event calling
 	}
 
+
+
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
@@ -354,6 +332,4 @@ public class Node extends AbstractActor  {
 				.match(Privilege.class, this::on_PrivilegeRcv)
 				.build();
 	}
-
-
 }
