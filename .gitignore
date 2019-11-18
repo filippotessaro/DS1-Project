@@ -22,3 +22,5 @@ app.iml
  gradle/
 gradlew
 gradlew.bat
+
+target/

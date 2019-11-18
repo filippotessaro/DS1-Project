@@ -69,7 +69,7 @@ public class RYMD {
 				arr[value].tell(new Initialize(value), ActorRef.noSender());
 				//#inject token in arbitrary node and flood it
 
-				/*
+
 				Scanner s = new Scanner(System.in);
 				char command = s.next().charAt(0);
 			
@@ -80,7 +80,6 @@ public class RYMD {
 				}
 
 				System.out.println(">>> Press f to fail a node <<<");
-*/
                 System.out.println(">>> Press ENTER to exit <<<");
                 System.in.read();
 		    } catch (IOException ioe) {

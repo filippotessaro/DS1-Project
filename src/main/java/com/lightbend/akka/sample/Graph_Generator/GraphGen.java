@@ -94,17 +94,6 @@ GraphGen {
         return G;
     }
 
-    public static void main(String[] args) {
-        int V = Integer.parseInt(args[0]);
-        int E = Integer.parseInt(args[1]);
-        int V1 = V/2;
-        int V2 = V - V1;
-
-        StdOut.println("tree");
-        StdOut.println(tree(V));
-        StdOut.println();
-    }
-
 }
 
 
