@@ -88,16 +88,15 @@ public class Message {
 
     //Advise message in reply to the Restart
     static public class Advise implements Serializable{
-        public int holder, fromId;
-        public boolean inQueueX, asked;
-        public LinkedList<Integer> z_reqQueue;
+        public int holder_y, fromId;
+        public boolean  asked_y;
+        public LinkedList<Integer> y_reqQueue;
 
-        public Advise(int from, int hold, boolean a, boolean in_queue, LinkedList<Integer> list){
+        public Advise(int from, int hold, boolean a, LinkedList<Integer> list){
             this.fromId = from;
-            this.holder = hold;
-            this.asked = a;
-            this.inQueueX = in_queue;
-            this.z_reqQueue = list;
+            this.holder_y = hold;
+            this.asked_y = a;
+            this.y_reqQueue = list;
         }
 
     }

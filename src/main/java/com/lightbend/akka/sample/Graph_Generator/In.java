@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.Socket;
-// import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
@@ -17,8 +16,6 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public final class In {
-
-    ///// begin: section (1 of 2) of code duplicated from In to StdIn.
 
     // assume Unicode UTF-8 encoding
     private static final String CHARSET_NAME = "UTF-8";
@@ -183,9 +180,6 @@ public final class In {
     public boolean exists()  {
         return scanner != null;
     }
-
-    ////  begin: section (2 of 2) of code duplicated from In to StdIn,
-    ////  with all methods changed from "public" to "public static".
 
     /**
      * Returns true if input stream is empty (except possibly whitespace).
@@ -538,89 +532,11 @@ public final class In {
         return vals;
     }
 
-    ///// end: section (2 of 2) of code duplicated from In to StdIn */
-
     /**
      * Closes this input stream.
      */
     public void close() {
         scanner.close();
     }
-
-    /**
-     * Reads all integers from a file and returns them as
-     * an array of integers.
-     *
-     * @param      filename the name of the file
-     * @return     the integers in the file
-     * @deprecated Replaced by {@code new In(filename)}.{@link #readAllInts()}.
-     */
-    @Deprecated
-    public static int[] readInts(String filename) {
-        return new In(filename).readAllInts();
-    }
-
-    /**
-     * Reads all doubles from a file and returns them as
-     * an array of doubles.
-     *
-     * @param      filename the name of the file
-     * @return     the doubles in the file
-     * @deprecated Replaced by {@code new In(filename)}.{@link #readAllDoubles()}.
-     */
-    @Deprecated
-    public static double[] readDoubles(String filename) {
-        return new In(filename).readAllDoubles();
-    }
-
-    /**
-     * Reads all strings from a file and returns them as
-     * an array of strings.
-     *
-     * @param      filename the name of the file
-     * @return     the strings in the file
-     * @deprecated Replaced by {@code new In(filename)}.{@link #readAllStrings()}.
-     */
-    @Deprecated
-    public static String[] readStrings(String filename) {
-        return new In(filename).readAllStrings();
-    }
-
-    /**
-     * Reads all integers from standard input and returns them
-     * an array of integers.
-     *
-     * @return     the integers on standard input
-     * @deprecated Replaced by {@link StdIn#readAllInts()}.
-     */
-    @Deprecated
-    public static int[] readInts() {
-        return new In().readAllInts();
-    }
-
-    /**
-     * Reads all doubles from standard input and returns them as
-     * an array of doubles.
-     *
-     * @return     the doubles on standard input
-     * @deprecated Replaced by {@link StdIn#readAllDoubles()}.
-     */
-    @Deprecated
-    public static double[] readDoubles() {
-        return new In().readAllDoubles();
-    }
-
-    /**
-     * Reads all strings from standard input and returns them as
-     *  an array of strings.
-     *
-     * @return     the strings on standard input
-     * @deprecated Replaced by {@link StdIn#readAllStrings()}.
-     */
-    @Deprecated
-    public static String[] readStrings() {
-        return new In().readAllStrings();
-    }
-
 
 }

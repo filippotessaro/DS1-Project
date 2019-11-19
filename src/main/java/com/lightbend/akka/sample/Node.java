@@ -17,7 +17,6 @@ import static java.lang.Thread.activeCount;
 import static java.lang.Thread.sleep;
 
 public class Node extends AbstractActor  {
-	private String holder;
 	private int my_id;
 
 	public int getId_holder() {
@@ -43,7 +42,6 @@ public class Node extends AbstractActor  {
 		this.my_id = my_id;
 		this.using = false;
 		this.asked = false;
-		this.holder = null;
 		this.id_holder = 0;
 		this.recovery = false;
 
@@ -52,8 +50,6 @@ public class Node extends AbstractActor  {
 	
 	//#Handle initialization message
 	private void init(Initialize a) {
-
-		this.holder = String.valueOf(a.getId());
 		this.id_holder = a.getId();
 
 		for(int neighbor: neighbors.keySet()) {
@@ -182,35 +178,13 @@ public class Node extends AbstractActor  {
 
 	private void on_RestartRcv(Restart res){
 		int id_RestartNode = res.getFromId();
-
-		int hold = 0;
-		boolean inQueueX = false, asked = false;
-
-		if(this.id_holder == id_RestartNode && !this.asked){
-			//x may be privileged node, Y is not an element of requestq
-			hold = id_RestartNode;
-			inQueueX = false;
-		} else if(this.id_holder == id_RestartNode && this.asked){
-			//x may be privileged, y is an element of requestq
-			hold = id_RestartNode;
-			inQueueX = true;
-		} else if(this.id_holder != id_RestartNode && !this.request_q.contains(id_RestartNode)){
-			//x not be privileged, asked must be false
-			hold = this.my_id;
-			asked = false;
-		} else if(this.id_holder != id_RestartNode && this.request_q.contains(id_RestartNode)){
-			//x not be the privileged node, it has req the privilege and asked=true
-			hold = this.my_id;
-			asked = true;
-		}
-
-		neighbors.get(id_RestartNode).tell(new Advise(my_id, hold, asked, inQueueX, (LinkedList)request_q), getSelf());
+		neighbors.get(id_RestartNode).tell(
+				new Advise(my_id, this.id_holder, this.asked, (LinkedList)request_q), getSelf());
 
 	}
 
 	private void on_AdviseRcv(Advise adv){
 
-		//TODO Store advises in data structure
 		if(adv != null){
 			// Add advise message to the list
 			advises.add(adv);
@@ -238,16 +212,16 @@ public class Node extends AbstractActor  {
 
 		//Determine holder & reconstruct queue in one cycle
 		for(Advise advise: advises) {
-			if(advise.holder == this.my_id){
+			if(advise.holder_y == this.my_id){
 				x_isHolder = true;
 			} else{
 				//case dissenting node
 				x_isHolder = false;
-				this.id_holder = advise.holder;
+				this.id_holder = advise.holder_y;
 			}
 
-			//Reconstruct queue
-			if(advise.holder == my_id && advise.inQueueX){
+			// Reconstruct the Request_Qx
+			if(advise.holder_y == my_id && advise.asked_y){
 				this.request_q.add(advise.fromId);
 			}
 
@@ -265,13 +239,12 @@ public class Node extends AbstractActor  {
 		}else{
 			for(Advise advise: advises) {
 				if(advise.fromId == id_holder &&
-						advise.z_reqQueue.contains(my_id)) {
+						advise.y_reqQueue.contains(my_id)) {
 					this.asked = true;
 				}
 			}
 		}
 
-		//Reconstruct the Request_Qx
 
 		//Reassigning usingX
 		this.using = false;
@@ -281,15 +254,13 @@ public class Node extends AbstractActor  {
 		// End up recovery mode
 		System.out.println("Node " + this.my_id + " terminates the recovery mode. ");
 		this.recovery = false;
-		this.assign_privilege();
-		this.make_request();
 	}
 
 	private void on_NodeFailure(NodeFailure failure){
 		//Reset all parameters
 		this.asked = false;
 		this.request_q.clear();
-		this.holder = null;
+		this.id_holder = -1;
 
 		System.out.println("Node " + my_id + " is failing... :(");
 
@@ -301,7 +272,7 @@ public class Node extends AbstractActor  {
 		//Delay for a sufficient long time
 		System.out.println("Sleep ...");
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(5000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
