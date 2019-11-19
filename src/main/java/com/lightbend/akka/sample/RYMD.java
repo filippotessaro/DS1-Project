@@ -74,9 +74,9 @@ public class RYMD {
 				char command = s.next().charAt(0);
 			
 				if (command == 'f') {
-					Random rand_om = new Random();
-					int valu_e = rand_om.nextInt(V);
-					arr[valu_e].tell(new Message.NodeFailure(), ActorRef.noSender());
+					Random random = new Random();
+					int val = random.nextInt(V);
+					arr[val].tell(new Message.NodeFailure(), ActorRef.noSender());
 				}
 
 				System.out.println(">>> Press f to fail a node <<<");
