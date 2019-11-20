@@ -64,7 +64,7 @@ public class RYMD {
 
 				//#inject token in a random node and flood it
 				Random rand = new Random();
-				int value = rand.nextInt(V);
+				int value = rand.nextInt(V -1 );
 				System.out.println("The starting holder is: " + value);
 				arr[value].tell(new Initialize(value), ActorRef.noSender());
 				//#inject token in arbitrary node and flood it

@@ -130,10 +130,6 @@ public class Node extends AbstractActor  {
 		}
 		make_request();
 
-		/*request_q.add(my_id);
-		getSelf().tell(new Privilege(), getSelf());
-		getSelf().tell(new Request(my_id), getSelf());*/
-
 	}
 
 	private void exit_CS(Exit_CS msg) {
@@ -162,7 +158,6 @@ public class Node extends AbstractActor  {
 
 	private void on_PrivilegeRcv(Privilege prv){
 		id_holder = my_id;
-		//holder = "self";
 		assign_privilege();
 		try {
 			Thread.sleep(100);
@@ -241,6 +236,8 @@ public class Node extends AbstractActor  {
 				if(advise.fromId == id_holder &&
 						advise.y_reqQueue.contains(my_id)) {
 					this.asked = true;
+				} else {
+					this.asked = false;
 				}
 			}
 		}
