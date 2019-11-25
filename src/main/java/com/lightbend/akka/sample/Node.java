@@ -1,20 +1,18 @@
 package com.lightbend.akka.sample;
 
-import java.sql.Array;
 import java.util.*;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import com.lightbend.akka.sample.Messages.Message.*;
+import com.sun.javafx.stage.StageHelper;
+
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.*;
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
+import java.sql.Timestamp;
 
 
-import static java.lang.Thread.activeCount;
-import static java.lang.Thread.sleep;
 
 public class Node extends AbstractActor  {
 	private int my_id;
@@ -32,12 +30,14 @@ public class Node extends AbstractActor  {
 	private boolean recovery;
 	public List<Advise> advises;
 
-	
+	private float recoveryStart;
+
+
 	static public Props props(int id) {
 
 		return Props.create(Node.class, () -> new Node(id));
 	}
-	
+
 	public Node(int my_id) {
 		this.my_id = my_id;
 		this.using = false;
@@ -47,14 +47,14 @@ public class Node extends AbstractActor  {
 
 		this.advises = new ArrayList();
 	}
-	
+
 	//#Handle initialization message
 	private void init(Initialize a) {
 		this.id_holder = a.getId();
 
-		for(int neighbor: neighbors.keySet()) {
+		for(int neighbor: this.neighbors.keySet()) {
 			if(neighbor != id_holder) {
-				neighbors.get(neighbor).tell(new Initialize(my_id), getSelf());
+				this.neighbors.get(neighbor).tell(new Initialize(my_id), getSelf());
 			}
 		}
 
@@ -65,17 +65,17 @@ public class Node extends AbstractActor  {
 	//#Handle initialization message
 
 	/*
-	* USEFUL METHOD PART:
-	* ASSIGN PRIVILEGE
-	* MAKE REQUEST
-	*/
+	 * USEFUL METHOD PART:
+	 * ASSIGN PRIVILEGE
+	 * MAKE REQUEST
+	 */
 
 	//#Handle Request message
 	private void make_request() {
 		if(!this.recovery){
-			if(id_holder != my_id && !request_q.isEmpty() && !asked) {
-				neighbors.get(id_holder).tell(new Request(my_id), getSelf());
-				asked = true;
+			if(this.id_holder != this.my_id && !this.request_q.isEmpty() && !this.asked) {
+				this.neighbors.get(this.id_holder).tell(new Request(this.my_id), getSelf());
+				this.asked = true;
 			}
 		}
 	}
@@ -83,17 +83,17 @@ public class Node extends AbstractActor  {
 
 	private void assign_privilege(){
 		if(!this.recovery){
-			if(id_holder == my_id && !using && !request_q.isEmpty()){
+			if(this.id_holder == this.my_id && !this.using && !this.request_q.isEmpty()){
 
 				// rewrite id_holder
-				id_holder = request_q.remove();
-				asked = false;
+				this.id_holder = request_q.remove();
+				this.asked = false;
 
 				if(id_holder == my_id){
-					using = true;
-					Do_CS();
+					this.using = true;
+					this.Do_CS();
 				} else {
-					neighbors.get(id_holder).tell(new Privilege(), getSelf());
+					this.neighbors.get(this.id_holder).tell(new Privilege(this.my_id), getSelf());
 				}
 			}
 		}
@@ -102,162 +102,156 @@ public class Node extends AbstractActor  {
 
 	/*----- EVENTS MANAGEMENT SECTION ------*/
 	public void Do_CS(){
-		System.out.println("Node: " + my_id + " is doing something in CS");
+		System.out.println("Node: " + this.my_id + " is doing something in CS");
 		try {
 			int randomNum = ThreadLocalRandom.current().nextInt(0, 100);
-			Thread.sleep(randomNum);
+			Thread.sleep(randomNum * 10);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} finally {
 			getSelf().tell(new Exit_CS(), ActorRef.noSender());
 
-			try {
+			/*try {
 				Thread.sleep(200);
 			} catch (InterruptedException e) {
 				System.out.println("Exception: " + e.toString() );
-			}
+			}*/
 			getSelf().tell(new Enter_CS(), getSelf());
 		}
 	}
 
 	private void wish_EnterCS(Enter_CS msg){
-		request_q.add(my_id);
-		assign_privilege();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		make_request();
+		this.request_q.add(this.my_id);
+		this.assign_privilege();
+		this.make_request();
 
 	}
 
 	private void exit_CS(Exit_CS msg) {
-		System.out.println("Node: " + my_id + " is exiting from the CS!");
-		using = false;
-		assign_privilege();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		make_request();
+		System.out.println("Node: " + this.my_id + " is exiting from the CS! \t Queue: [" + this.request_q.toString() + "]");
+		this.using = false;
+		this.assign_privilege();
+		this.make_request();
 	}
 
 	private void on_RequestRcv(Request req){
 		int reqId = req.getFromId();
-		request_q.add(reqId);
-		assign_privilege();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		make_request();
+		this.request_q.add(reqId);
+		this.assign_privilege();
+		this.make_request();
 	}
 
 	private void on_PrivilegeRcv(Privilege prv){
-		id_holder = my_id;
-		assign_privilege();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		if(this.recovery){
+			System.out.println("Node:" + this.my_id + " is in recovery and receives privilege from "
+					+ prv.getFromId() + " \t Queue is : [" + this.request_q.toString() + "]");
 		}
-		make_request();
+		this.id_holder = this.my_id;
+		this.assign_privilege();
+		this.make_request();
 	}
 
 	/*
-	* RECOVERY EVENTS
-	* */
+	 * RECOVERY EVENTS
+	 * */
 
 	private void on_RestartRcv(Restart res){
 		int id_RestartNode = res.getFromId();
 		neighbors.get(id_RestartNode).tell(
-				new Advise(my_id, this.id_holder, this.asked, (LinkedList)request_q), getSelf());
-
+				new Advise(this.my_id, this.id_holder, this.asked, (LinkedList)this.request_q), getSelf());
 	}
 
 	private void on_AdviseRcv(Advise adv){
 
-		if(adv != null){
-			// Add advise message to the list
-			advises.add(adv);
-		} else {
-			System.out.println("There is a problem on Advise reception");
-		}
-
-		if(advises.size() == neighbors.keySet().size()){
-			System.out.println("Advises Received from " + adv.fromId);
+		// Add advise message to the list
+		this.advises.add(adv);
+		System.out.println("Advises Received from " + adv.fromId);
+		if(this.advises.size() == this.neighbors.keySet().size()){
 			RestoreNode();
 		}
-
 	}
 
 	private void RestoreNode() {
-		//Node restoring part
 
 		// enter only on this condition
-		assert (advises.size() == neighbors.keySet().size() && this.recovery);
+		assert (this.advises.size() == this.neighbors.keySet().size() && this.recovery);
+		assert (this.request_q.size() == 0);
 
 		System.out.println("Restoring Failed Node: " + my_id);
 
-		boolean x_isHolder = false;
-
+		boolean x_isHolder = true;
 
 		//Determine holder & reconstruct queue in one cycle
 		for(Advise advise: advises) {
-			if(advise.holder_y == this.my_id){
-				x_isHolder = true;
-			} else{
+			System.out.println(advise.holder_y);
+			if(advise.holder_y != this.my_id){
 				//case dissenting node
 				x_isHolder = false;
 				this.id_holder = advise.holder_y;
 			}
+		}
 
+		if(x_isHolder){
+			System.out.println("Node " + this.my_id + " is privileged");
+			this.id_holder = this.my_id;
+			//if(this.request_q.size() == 0){
+			this.request_q.clear();
+			this.request_q.add(this.my_id);
+			/*}else{
+				System.out.println("Node " + this.my_id + " queue is: " + request_q.toString());
+
+			}*/
+		} else {
+			System.out.println("Node " + this.my_id + " is not privileged");
+		}
+
+		for(Advise advise: advises) {
 			// Reconstruct the Request_Qx
-			if(advise.holder_y == my_id && advise.asked_y){
+			if(advise.holder_y == this.my_id && advise.asked_y){
 				this.request_q.add(advise.fromId);
 			}
-
 		}
-		if(x_isHolder){
-			System.out.println("Node " + my_id + " is privileged");
-			this.id_holder = my_id;
-		}else{
-			System.out.println("Node " + my_id + " is not privileged");
-		}
-
 		//Determining AskedX
-		if(id_holder == my_id){
+
+		if(this.id_holder == this.my_id){
 			this.asked = false;
 		}else{
-			for(Advise advise: advises) {
-				if(advise.fromId == id_holder &&
-						advise.y_reqQueue.contains(my_id)) {
+			for(Advise advise: this.advises) {
+				if(advise.fromId == this.id_holder &&
+						advise.y_reqQueue.contains(this.my_id)) {
 					this.asked = true;
-				} else {
-					this.asked = false;
 				}
+
 			}
 		}
 
 
 		//Reassigning usingX
 		this.using = false;
-
-		advises.clear();
+		this.advises.clear();
 
 		// End up recovery mode
 		System.out.println("Node " + this.my_id + " terminates the recovery mode. ");
 		this.recovery = false;
+
+		if(!x_isHolder){
+			//this.make_request();
+			getSelf().tell(new Enter_CS(), getSelf());
+		}else{
+			this.assign_privilege();
+		}
+
 	}
 
 	private void on_NodeFailure(NodeFailure failure){
 		//Reset all parameters
+
+		System.out.println("Holder of node " + this.my_id + " is " + this.id_holder);
 		this.asked = false;
 		this.request_q.clear();
 		this.id_holder = -1;
+		this.recoveryStart = System.currentTimeMillis();
+		this.recovery = true;
 
 		System.out.println("Node " + my_id + " is failing... :(");
 
@@ -267,13 +261,13 @@ public class Node extends AbstractActor  {
 
 	private void StartRecovery(){
 		//Delay for a sufficient long time
-		System.out.println("Sleep ...");
+		System.out.println("Start delay");
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(3000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		System.out.println("End Sleep ... \nStart sending Restart Messages to neighbours");
+		System.out.println("End node " + this.my_id + "'s delay. \nStart sending Restart Messages to neighbours");
 
 		//Send Restart Message to each neighbours
 		for(int neighbor: neighbors.keySet()) {

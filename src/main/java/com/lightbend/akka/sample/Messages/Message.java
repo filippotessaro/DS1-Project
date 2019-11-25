@@ -41,7 +41,17 @@ public class Message {
     }
     //Initialization message
 
-    public static class Privilege implements Serializable{ }
+    public static class Privilege implements Serializable{
+        int fromId;
+
+        public Privilege(int i){
+            this.fromId = i;
+        }
+
+        public int getFromId() {
+            return fromId;
+        }
+    }
 
     //#Request message
     static public class Request implements Serializable {
@@ -67,8 +77,8 @@ public class Message {
 
 
     /*
-    * FAILURE MESSAGES
-    * */
+     * FAILURE MESSAGES
+     * */
 
     //Node Failure message to enter in Recovery Mode
     static public class NodeFailure implements Serializable{ }
@@ -93,11 +103,15 @@ public class Message {
         public LinkedList<Integer> y_reqQueue;
 
         public Advise(int from, int hold, boolean a, LinkedList<Integer> list){
+
+            System.out.println("formId:" + from + ", holderz:" + hold);
             this.fromId = from;
             this.holder_y = hold;
+            this.asked_y = a;
             this.asked_y = a;
             this.y_reqQueue = list;
         }
 
     }
 }
+
