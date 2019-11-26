@@ -73,6 +73,7 @@ public class Node extends AbstractActor  {
 	//#Handle Request message
 	private void make_request() {
 		if(!this.recovery){
+			//System.out.println("")
 			if(this.id_holder != this.my_id && !this.request_q.isEmpty() && !this.asked) {
 				this.neighbors.get(this.id_holder).tell(new Request(this.my_id), getSelf());
 				this.asked = true;
@@ -122,9 +123,8 @@ public class Node extends AbstractActor  {
 
 	private void wish_EnterCS(Enter_CS msg){
 		this.request_q.add(this.my_id);
-		this.assign_privilege();
-		this.make_request();
-
+		assign_privilege();
+		make_request();
 	}
 
 	private void exit_CS(Exit_CS msg) {
@@ -181,26 +181,21 @@ public class Node extends AbstractActor  {
 
 		boolean x_isHolder = true;
 
-		//Determine holder & reconstruct queue in one cycle
+		//Determine holder
 		for(Advise advise: advises) {
 			System.out.println(advise.holder_y);
 			if(advise.holder_y != this.my_id){
 				//case dissenting node
 				x_isHolder = false;
-				this.id_holder = advise.holder_y;
+				this.id_holder = advise.fromId;
 			}
 		}
 
 		if(x_isHolder){
 			System.out.println("Node " + this.my_id + " is privileged");
 			this.id_holder = this.my_id;
-			//if(this.request_q.size() == 0){
 			this.request_q.clear();
 			this.request_q.add(this.my_id);
-			/*}else{
-				System.out.println("Node " + this.my_id + " queue is: " + request_q.toString());
-
-			}*/
 		} else {
 			System.out.println("Node " + this.my_id + " is not privileged");
 		}
@@ -211,36 +206,32 @@ public class Node extends AbstractActor  {
 				this.request_q.add(advise.fromId);
 			}
 		}
-		//Determining AskedX
 
+		//Determining AskedX
 		if(this.id_holder == this.my_id){
 			this.asked = false;
-		}else{
+		} else {
 			for(Advise advise: this.advises) {
 				if(advise.fromId == this.id_holder &&
 						advise.y_reqQueue.contains(this.my_id)) {
 					this.asked = true;
 				}
-
 			}
 		}
-
 
 		//Reassigning usingX
 		this.using = false;
 		this.advises.clear();
 
 		// End up recovery mode
-		System.out.println("Node " + this.my_id + " terminates the recovery mode. ");
+		System.out.println("Node " + this.my_id + " terminates the recovery mode.");
 		this.recovery = false;
 
 		if(!x_isHolder){
-			//this.make_request();
 			getSelf().tell(new Enter_CS(), getSelf());
-		}else{
-			this.assign_privilege();
+		} else {
+			assign_privilege();
 		}
-
 	}
 
 	private void on_NodeFailure(NodeFailure failure){
