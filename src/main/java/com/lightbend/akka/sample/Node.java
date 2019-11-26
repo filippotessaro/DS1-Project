@@ -103,7 +103,7 @@ public class Node extends AbstractActor  {
 
 	/*----- EVENTS MANAGEMENT SECTION ------*/
 	public void Do_CS(){
-		System.out.println("Node: " + this.my_id + " is doing something in CS");
+		System.out.println("Node " + this.my_id + " is doing something in CS");
 		try {
 			int randomNum = ThreadLocalRandom.current().nextInt(0, 100);
 			Thread.sleep(randomNum * 10);
@@ -128,7 +128,7 @@ public class Node extends AbstractActor  {
 	}
 
 	private void exit_CS(Exit_CS msg) {
-		System.out.println("Node: " + this.my_id + " is exiting from the CS! \t Queue: [" + this.request_q.toString() + "]");
+		System.out.println("Node " + this.my_id + " is exiting from the CS! \t Queue: [" + this.request_q.toString() + "]");
 		this.using = false;
 		this.assign_privilege();
 		this.make_request();
@@ -143,7 +143,7 @@ public class Node extends AbstractActor  {
 
 	private void on_PrivilegeRcv(Privilege prv){
 		if(this.recovery){
-			System.out.println("Node:" + this.my_id + " is in recovery and receives privilege from "
+			System.out.println("Node " + this.my_id + " is in recovery and receives privilege from "
 					+ prv.getFromId() + " \t Queue is : [" + this.request_q.toString() + "]");
 		}
 		this.id_holder = this.my_id;
@@ -177,7 +177,7 @@ public class Node extends AbstractActor  {
 		assert (this.advises.size() == this.neighbors.keySet().size() && this.recovery);
 		assert (this.request_q.size() == 0);
 
-		System.out.println("Restoring Failed Node: " + my_id);
+		System.out.println("Restoring Failed Node " + my_id);
 
 		boolean x_isHolder = true;
 
@@ -224,7 +224,7 @@ public class Node extends AbstractActor  {
 		this.advises.clear();
 
 		// End up recovery mode
-		System.out.println("Node " + this.my_id + " terminates the recovery mode.");
+		System.out.println("Node " + this.my_id + " terminates the recovery phase.");
 		this.recovery = false;
 
 		if(!x_isHolder){
