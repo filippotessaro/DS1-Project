@@ -13,8 +13,8 @@ dependencies {
   testCompile 'com.typesafe.akka:akka-testkit_2.12:2.5.21'
   testCompile 'junit:junit:4.12'
 }
-//sourceSets.main.java.srcDirs = ['src']
-mainClassName = "com.lightbend.akka.sample.RYMD"
+
+mainClassName = "com.akka.Raymonds.RYMD"
 
 run {
   standardInput = System.in

@@ -24,3 +24,13 @@ gradlew
 gradlew.bat
 
 target/
+
+build.gradle
+build.sbt
+gradle/
+
+pom.xml
+project/
+sbt
+sbt-dist/
+sbt.bat
