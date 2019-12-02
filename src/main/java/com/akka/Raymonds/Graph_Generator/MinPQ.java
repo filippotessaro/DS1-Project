@@ -1,4 +1,4 @@
-package com.lightbend.akka.sample.Graph_Generator;
+package com.akka.Raymonds.Graph_Generator;
 
 import java.util.Comparator;
 import java.util.Iterator;

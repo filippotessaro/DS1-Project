@@ -1,11 +1,12 @@
-package com.lightbend.akka.sample;
+package com.akka.Raymonds;
 
 import java.util.*;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import com.lightbend.akka.sample.Messages.Message.*;
+import com.akka.Raymonds.Messages.Message;
+
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.*;
 
@@ -25,7 +26,7 @@ public class Node extends AbstractActor  {
 
 	// params for recovery
 	private boolean recovery;
-	public List<Advise> advises;
+	public List<Message.Advise> advises;
 
 	private float recoveryStart;
 
@@ -46,17 +47,17 @@ public class Node extends AbstractActor  {
 	}
 
 	//#Handle initialization message
-	private void init(Initialize a) {
+	private void init(Message.Initialize a) {
 		this.id_holder = a.getId();
 
 		for(int neighbor: this.neighbors.keySet()) {
 			if(neighbor != id_holder) {
-				this.neighbors.get(neighbor).tell(new Initialize(my_id), getSelf());
+				this.neighbors.get(neighbor).tell(new Message.Initialize(my_id), getSelf());
 			}
 		}
 
 		//Node wishes to enter in CS
-		getSelf().tell(new Enter_CS(), getSelf());
+		getSelf().tell(new Message.Enter_CS(), getSelf());
 
 	}
 	//#Handle initialization message
@@ -70,9 +71,8 @@ public class Node extends AbstractActor  {
 	//#Handle Request message
 	private void make_request() {
 		if(!this.recovery){
-			//System.out.println("")
 			if(this.id_holder != this.my_id && !this.request_q.isEmpty() && !this.asked) {
-				this.neighbors.get(this.id_holder).tell(new Request(this.my_id), getSelf());
+				this.neighbors.get(this.id_holder).tell(new Message.Request(this.my_id), getSelf());
 				this.asked = true;
 			}
 		}
@@ -91,7 +91,7 @@ public class Node extends AbstractActor  {
 					this.using = true;
 					this.Do_CS();
 				} else {
-					this.neighbors.get(this.id_holder).tell(new Privilege(this.my_id), getSelf());
+					this.neighbors.get(this.id_holder).tell(new Message.Privilege(this.my_id), getSelf());
 				}
 			}
 		}
@@ -107,38 +107,32 @@ public class Node extends AbstractActor  {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} finally {
-			getSelf().tell(new Exit_CS(), ActorRef.noSender());
-
-			/*try {
-				Thread.sleep(200);
-			} catch (InterruptedException e) {
-				System.out.println("Exception: " + e.toString() );
-			}*/
-			getSelf().tell(new Enter_CS(), getSelf());
+			getSelf().tell(new Message.Exit_CS(), ActorRef.noSender());
+			getSelf().tell(new Message.Enter_CS(), getSelf());
 		}
 	}
 
-	private void wish_EnterCS(Enter_CS msg){
+	private void wish_EnterCS(Message.Enter_CS msg){
 		this.request_q.add(this.my_id);
 		assign_privilege();
 		make_request();
 	}
 
-	private void exit_CS(Exit_CS msg) {
+	private void exit_CS(Message.Exit_CS msg) {
 		System.out.println("Node " + this.my_id + " is exiting from the CS! \t Queue: [" + this.request_q.toString() + "]");
 		this.using = false;
 		this.assign_privilege();
 		this.make_request();
 	}
 
-	private void on_RequestRcv(Request req){
+	private void on_RequestRcv(Message.Request req){
 		int reqId = req.getFromId();
 		this.request_q.add(reqId);
 		this.assign_privilege();
 		this.make_request();
 	}
 
-	private void on_PrivilegeRcv(Privilege prv){
+	private void on_PrivilegeRcv(Message.Privilege prv){
 		if(this.recovery){
 			System.out.println("Node " + this.my_id + " is in recovery and receives privilege from "
 					+ prv.getFromId() + " \t Queue is : [" + this.request_q.toString() + "]");
@@ -152,13 +146,13 @@ public class Node extends AbstractActor  {
 	 * RECOVERY EVENTS
 	 * */
 
-	private void on_RestartRcv(Restart res){
+	private void on_RestartRcv(Message.Restart res){
 		int id_RestartNode = res.getFromId();
 		neighbors.get(id_RestartNode).tell(
-				new Advise(this.my_id, this.id_holder, this.asked, (LinkedList)this.request_q), getSelf());
+				new Message.Advise(this.my_id, this.id_holder, this.asked, (LinkedList)this.request_q), getSelf());
 	}
 
-	private void on_AdviseRcv(Advise adv){
+	private void on_AdviseRcv(Message.Advise adv){
 
 		// Add advise message to the list
 		this.advises.add(adv);
@@ -179,8 +173,7 @@ public class Node extends AbstractActor  {
 		boolean x_isHolder = true;
 
 		//Determine holder
-		for(Advise advise: advises) {
-			System.out.println(advise.holder_y);
+		for(Message.Advise advise: advises) {
 			if(advise.holder_y != this.my_id){
 				//case dissenting node
 				x_isHolder = false;
@@ -197,7 +190,7 @@ public class Node extends AbstractActor  {
 			System.out.println("Node " + this.my_id + " is not privileged");
 		}
 
-		for(Advise advise: advises) {
+		for(Message.Advise advise: advises) {
 			// Reconstruct the Request_Qx
 			if(advise.holder_y == this.my_id && advise.asked_y){
 				this.request_q.add(advise.fromId);
@@ -208,7 +201,7 @@ public class Node extends AbstractActor  {
 		if(this.id_holder == this.my_id){
 			this.asked = false;
 		} else {
-			for(Advise advise: this.advises) {
+			for(Message.Advise advise: this.advises) {
 				if(advise.fromId == this.id_holder &&
 						advise.y_reqQueue.contains(this.my_id)) {
 					this.asked = true;
@@ -225,13 +218,13 @@ public class Node extends AbstractActor  {
 		this.recovery = false;
 
 		if(!x_isHolder){
-			getSelf().tell(new Enter_CS(), getSelf());
+			getSelf().tell(new Message.Enter_CS(), getSelf());
 		} else {
 			assign_privilege();
 		}
 	}
 
-	private void on_NodeFailure(NodeFailure failure){
+	private void on_NodeFailure(Message.NodeFailure failure){
 		//Reset all parameters
 
 		System.out.println("Holder of node " + this.my_id + " is " + this.id_holder);
@@ -259,7 +252,7 @@ public class Node extends AbstractActor  {
 
 		//Send Restart Message to each neighbours
 		for(int neighbor: neighbors.keySet()) {
-			neighbors.get(neighbor).tell(new Restart(my_id), getSelf());
+			neighbors.get(neighbor).tell(new Message.Restart(my_id), getSelf());
 		}
 		//Now await the advise messages on the event calling
 	}
@@ -269,17 +262,17 @@ public class Node extends AbstractActor  {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
-				.match(Initialize.class, this::init)
-				.match(Request.class, this::on_RequestRcv)
-				.match(Exit_CS.class, this::exit_CS)
-				.match(Enter_CS.class, this::wish_EnterCS)
-				.match(Restart.class, this::on_RestartRcv)
-				.match(Advise.class, this::on_AdviseRcv)
-				.match(NodeFailure.class, this::on_NodeFailure)
-				.match(Building_tree.class, bt -> {
+				.match(Message.Initialize.class, this::init)
+				.match(Message.Request.class, this::on_RequestRcv)
+				.match(Message.Exit_CS.class, this::exit_CS)
+				.match(Message.Enter_CS.class, this::wish_EnterCS)
+				.match(Message.Restart.class, this::on_RestartRcv)
+				.match(Message.Advise.class, this::on_AdviseRcv)
+				.match(Message.NodeFailure.class, this::on_NodeFailure)
+				.match(Message.Building_tree.class, bt -> {
 					this.neighbors.put(bt.id, bt.neighbor);
 				})
-				.match(Privilege.class, this::on_PrivilegeRcv)
+				.match(Message.Privilege.class, this::on_PrivilegeRcv)
 				.build();
 	}
 }

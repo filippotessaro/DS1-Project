@@ -1,4 +1,4 @@
-package com.lightbend.akka.sample.Messages;
+package com.akka.Raymonds.Messages;
 
 import akka.actor.ActorRef;
 
@@ -104,7 +104,6 @@ public class Message {
 
         public Advise(int from, int hold, boolean a, LinkedList<Integer> list){
 
-            //System.out.println("formId:" + from + ", holderz:" + hold);
             this.fromId = from;
             this.holder_y = hold;
             this.asked_y = a;
