@@ -19,7 +19,7 @@ public class RYMD {
 
 	public static ActorRef OnceUponATime(int vertex) {
 		final ActorRef nodeRef =
-				system.actorOf(Node.props(vertex));
+				system.actorOf(Node.props(vertex, system));
 		return nodeRef;
 	}
 

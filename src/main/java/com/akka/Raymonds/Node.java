@@ -4,12 +4,14 @@ import java.util.*;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 import akka.actor.Props;
 import com.akka.Raymonds.Messages.Message;
+import scala.concurrent.duration.Duration;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.*;
-
+import java.util.concurrent.TimeUnit;
 
 
 public class Node extends AbstractActor  {
@@ -18,6 +20,7 @@ public class Node extends AbstractActor  {
 	public int getId_holder() {
 		return id_holder;
 	}
+	private static ActorSystem system;
 
 	private int id_holder;
 	private boolean using, asked;
@@ -28,16 +31,15 @@ public class Node extends AbstractActor  {
 	private boolean recovery;
 	public List<Message.Advise> advises;
 
-	private float recoveryStart;
 
+	static public Props props(int id, ActorSystem sys) {
 
-	static public Props props(int id) {
-
-		return Props.create(Node.class, () -> new Node(id));
+		return Props.create(Node.class, () -> new Node(id, sys));
 	}
 
-	public Node(int my_id) {
+	public Node(int my_id, ActorSystem system) {
 		this.my_id = my_id;
+		this.system = system;
 		this.using = false;
 		this.asked = false;
 		this.id_holder = 0;
@@ -101,15 +103,18 @@ public class Node extends AbstractActor  {
 	/*----- EVENTS MANAGEMENT SECTION ------*/
 	public void Do_CS(){
 		System.out.println("Node " + this.my_id + " is doing something in CS");
-		try {
-			int randomNum = ThreadLocalRandom.current().nextInt(0, 100);
-			Thread.sleep(randomNum * 10);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} finally {
-			getSelf().tell(new Message.Exit_CS(), ActorRef.noSender());
-			getSelf().tell(new Message.Enter_CS(), getSelf());
-		}
+
+		int randomNum = ThreadLocalRandom.current().nextInt(0, 100);
+		//Thread.sleep(randomNum * 10);
+
+		this.system.scheduler().scheduleOnce(Duration.create(randomNum * 10, TimeUnit.MILLISECONDS), new Runnable() {
+			@Override
+			public void run() {
+				getSelf().tell(new Message.Exit_CS(), ActorRef.noSender());
+				getSelf().tell(new Message.Enter_CS(), getSelf());
+			}
+		}, system.dispatcher());
+
 	}
 
 	private void wish_EnterCS(Message.Enter_CS msg){
@@ -231,7 +236,6 @@ public class Node extends AbstractActor  {
 		this.asked = false;
 		this.request_q.clear();
 		this.id_holder = -1;
-		this.recoveryStart = System.currentTimeMillis();
 		this.recovery = true;
 
 		System.out.println("Node " + my_id + " is failing... :(");
