@@ -33,7 +33,6 @@ public class Node extends AbstractActor  {
 
 
 	static public Props props(int id, ActorSystem sys) {
-
 		return Props.create(Node.class, () -> new Node(id, sys));
 	}
 
@@ -44,7 +43,6 @@ public class Node extends AbstractActor  {
 		this.asked = false;
 		this.id_holder = 0;
 		this.recovery = false;
-
 		this.advises = new ArrayList();
 	}
 
@@ -103,14 +101,14 @@ public class Node extends AbstractActor  {
 	/*----- EVENTS MANAGEMENT SECTION ------*/
 	public void Do_CS(){
 		System.out.println("Node " + this.my_id + " is doing something in CS");
-
 		int randomNum = ThreadLocalRandom.current().nextInt(0, 100);
-		//Thread.sleep(randomNum * 10);
 
 		this.system.scheduler().scheduleOnce(Duration.create(randomNum * 10, TimeUnit.MILLISECONDS), new Runnable() {
 			@Override
 			public void run() {
 				getSelf().tell(new Message.Exit_CS(), ActorRef.noSender());
+
+				//the node wishes to re-enter in CS
 				getSelf().tell(new Message.Enter_CS(), getSelf());
 			}
 		}, system.dispatcher());
@@ -158,7 +156,6 @@ public class Node extends AbstractActor  {
 	}
 
 	private void on_AdviseRcv(Message.Advise adv){
-
 		// Add advise message to the list
 		this.advises.add(adv);
 		System.out.println("Advises Received from " + adv.fromId);
@@ -168,13 +165,11 @@ public class Node extends AbstractActor  {
 	}
 
 	private void RestoreNode() {
-
 		// enter only on this condition
 		assert (this.advises.size() == this.neighbors.keySet().size() && this.recovery);
 		assert (this.request_q.size() == 0);
 
 		System.out.println("Restoring Failed Node " + my_id);
-
 		boolean x_isHolder = true;
 
 		//Determine holder
@@ -231,7 +226,6 @@ public class Node extends AbstractActor  {
 
 	private void on_NodeFailure(Message.NodeFailure failure){
 		//Reset all parameters
-
 		System.out.println("Holder of node " + this.my_id + " is " + this.id_holder);
 		this.asked = false;
 		this.request_q.clear();
