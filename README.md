@@ -7,7 +7,6 @@ Authors:
 
 ## How to compile the code
 ```
-gradle compile
 gradle run --args='n'
 ``` 
 where `n` is the number of nodes of the random tree.
