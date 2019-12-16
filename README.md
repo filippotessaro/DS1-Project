@@ -10,3 +10,7 @@ Authors:
 gradle run --args='n'
 ``` 
 where `n` is the number of nodes of the random tree.
+
+## Simulate a Node Failure
+When the program is running press the _f_ key and _Enter_ 
+to simulate a failure of a Random Node.

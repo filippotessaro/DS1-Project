@@ -59,16 +59,17 @@ public class RYMD {
 
 				Scanner s = new Scanner(System.in);
 				char command = s.next().charAt(0);
-			
-				if (command == 'f') {
-					Random random = new Random();
-					int val = random.nextInt(V);
-					arr[val].tell(new Message.NodeFailure(), ActorRef.noSender());
-				} else {
-					return;
+				while(true) {
+					if (command == 'f') {
+						Random random = new Random();
+						int val = random.nextInt(V);
+						arr[val].tell(new Message.NodeFailure(), ActorRef.noSender());
+					} else if (command == 't') {
+						return;
+					}
+					System.in.read();
 				}
 
-                System.in.read();
 		    } catch (IOException ioe) {
 		    } finally {
 				system.terminate();

@@ -63,7 +63,7 @@ public class Node extends AbstractActor  {
 	//#Handle initialization message
 
 	/*
-	 * USEFUL METHOD PART:
+	 * USEFUL METHODS PART:
 	 * ASSIGN PRIVILEGE
 	 * MAKE REQUEST
 	 */
@@ -177,6 +177,9 @@ public class Node extends AbstractActor  {
 			if(advise.holder_y != this.my_id){
 				//case dissenting node
 				x_isHolder = false;
+
+				//Dissenting node could be:
+				// the neighbour or a neighbour of it
 				this.id_holder = advise.fromId;
 			}
 		}
@@ -184,6 +187,8 @@ public class Node extends AbstractActor  {
 		if(x_isHolder){
 			System.out.println("Node " + this.my_id + " is privileged");
 			this.id_holder = this.my_id;
+			// to be sure that the queue is empty and
+			// no other nodes cause problem to the recovery phase
 			this.request_q.clear();
 			this.request_q.add(this.my_id);
 		} else {
