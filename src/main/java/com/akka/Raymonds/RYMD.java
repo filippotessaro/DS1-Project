@@ -56,7 +56,6 @@ public class RYMD {
 				arr[value].tell(new Message.Initialize(value), ActorRef.noSender());
 				//#inject token in arbitrary node and start flooding
 
-
 				Scanner s = new Scanner(System.in);
 				char command = s.next().charAt(0);
 				while(true) {
@@ -65,6 +64,7 @@ public class RYMD {
 						int val = random.nextInt(V);
 						arr[val].tell(new Message.NodeFailure(), ActorRef.noSender());
 					} else if (command == 't') {
+						system.terminate();
 						return;
 					}
 					System.in.read();

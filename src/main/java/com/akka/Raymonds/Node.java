@@ -247,7 +247,7 @@ public class Node extends AbstractActor  {
 		//Delay for a sufficient long time
 		System.out.println("Start delay");
 		try {
-			Thread.sleep(3000);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
